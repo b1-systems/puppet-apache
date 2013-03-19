@@ -20,6 +20,7 @@ define apache::auth::htpasswd (
   }
 
   $_authUserFile = "${_userFileLocation}/${userFileName}"
+  $htpasswd = $apache::params::htpasswd
 
   case $ensure {
 
@@ -33,14 +34,15 @@ define apache::auth::htpasswd (
       }
 
       if $cryptPassword {
-        exec {"test -f ${_authUserFile} || OPT='-c'; htpasswd -bp \${OPT} ${_authUserFile} ${username} '${cryptPassword}'":
+        exec {"test -f ${_authUserFile} || OPT='-c'; ${htpasswd} -bp \${OPT} ${_authUserFile} ${username} '${cryptPassword}'":
           unless  => "grep -q ${username}:${cryptPassword} ${_authUserFile}",
           require => File[$_userFileLocation],
+          
         }
       }
 
       if $clearPassword {
-        exec {"test -f ${_authUserFile} || OPT='-c'; htpasswd -b \$OPT ${_authUserFile} ${username} ${clearPassword}":
+        exec {"test -f ${_authUserFile} || OPT='-c'; ${htpasswd} -b \$OPT ${_authUserFile} ${username} ${clearPassword}":
           unless  => "egrep '^${username}:' ${_authUserFile} && grep ${username}:\$(mkpasswd -S \$(egrep '^${username}:' ${_authUserFile} |cut -d : -f 2 |cut -c-2) ${clearPassword}) ${_authUserFile}",
           require => File[$_userFileLocation],
         }
@@ -48,7 +50,7 @@ define apache::auth::htpasswd (
     }
 
     'absent': {
-      exec {"htpasswd -D ${_authUserFile} ${username}":
+      exec {"${htpasswd} -D ${_authUserFile} ${username}":
         onlyif => "egrep -q '^${username}:' ${_authUserFile}",
         notify => Exec["delete ${_authUserFile} after remove ${username}"],
       }

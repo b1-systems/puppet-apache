@@ -17,6 +17,7 @@ class apache {
   case $::operatingsystem {
     Debian,Ubuntu:  { include apache::debian}
     RedHat,CentOS:  { include apache::redhat}
+    SLES,OpenSUSE:  { include apache::suse}
     default: { fail "Unsupported operatingsystem ${::operatingsystem}" }
   }
 }
